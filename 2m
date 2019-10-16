@@ -1,7 +1,7 @@
 #!/user/bin/env python
 import rospy
 import mavros
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped,Twist,Point
 from mavros_msgs.srv import SetMode
 from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBool
@@ -13,7 +13,7 @@ def state_cb(msg):
 	global current_state
 	current_state = msg
 
-if _name_ == '_main_':
+if __name__ == '__main__':
 	rospy.init_node('offboard_node',anonymous=True)
 	rate = rospy.Rate(20)
 	state_sub = rospy.Subscriber("mavros/state",State,state_cb)
@@ -21,7 +21,7 @@ if _name_ == '_main_':
 	arming_handler = rospy.ServiceProxy("mavros/cmd/arming",CommandBool)
 	set_mode_handler = rospy.ServiceProxy("mavros/set_mode",SetMode)	
 
-	circle = Twist()
+	circle = PoseStamped()
 
 	while not current_state.connected:
 		rate.sleep()
