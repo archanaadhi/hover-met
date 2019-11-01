@@ -4,19 +4,32 @@ import mavros
 from geometry_msgs.msg import PoseStamped,Twist,Point
 from mavros_msgs.srv import SetMode
 from mavros_msgs.msg import State
-from mavros_msgs.srv import CommandBool
-
+from mavros_msgs.srv import *
+import time
 current_state = State()
 previous_state = State()
+current_posestamped=PoseStamped()
+def takeoff():
+	rospy.wait_for_service('mavros/cmd/takeoff')
+	try:
+		takeoff_handler = rospy.ServiceProxy('mavros/cmd/takeoff', CommandTOL)
+		takeoff_handler()
+	except rospy.ServiceException, e:
+		print "Service takeoff call failed: %s"%e
+
 
 def state_cb(msg):
 	global current_state
 	current_state = msg
+def posestamped_cb(data):
+	global current_posestamped
+	current_posestamped=data	
 
 if __name__ == '__main__':
 	rospy.init_node('offboard_node',anonymous=True)
 	rate = rospy.Rate(20)
 	state_sub = rospy.Subscriber("mavros/state",State,state_cb)
+	posestamped_sub=rospy.Subscriber("mavros/local_position/pose",PoseStamped,posestamped_cb)
 	pub = rospy.Publisher("mavros/setpoint_position/local",PoseStamped,queue_size=10)
 	arming_handler = rospy.ServiceProxy("mavros/cmd/arming",CommandBool)
 	set_mode_handler = rospy.ServiceProxy("mavros/set_mode",SetMode)	
@@ -25,11 +38,25 @@ if __name__ == '__main__':
 
 	while not current_state.connected:
 		rate.sleep()
+	arming_handler(True)
+	takeoff()
+	pose = PoseStamped()	
 
-	pose = PoseStamped()
-	pose.pose.position.x = 0
-	pose.pose.position.y = 0
-	pose.pose.position.z = 2
+	current_posestamped.pose.position.x = 0	
+	current_posestamped.pose.position.y = 0
+	current_posestamped.pose.position.z = 1
+	
+	if current_posestamped.pose.position.z>0:
+	 circle.pose.position.x = 0
+	 circle.pose.position.y = 0
+	 circle.pose.position.z = 2
+	 time.sleep(60)
+	elif current_posestamped.pose.position.z>1:
+		circle.pose.position.x = 0
+		circle.pose.position.y = 0
+		circle.pose.position.z = 0
+
+
 
 	for i in range(100):
 		pub.publish(pose)
